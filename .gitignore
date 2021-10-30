@@ -1,0 +1,8 @@
+.vscode/
+.settings/
+target/
+.apt_generated/
+.classpath
+.factorypath
+*.log
+.project
