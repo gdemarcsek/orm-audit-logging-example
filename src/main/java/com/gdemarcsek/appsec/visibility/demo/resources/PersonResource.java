@@ -24,6 +24,7 @@ public class PersonResource {
     @POST
     @UnitOfWork
     @RolesAllowed({ "ADMIN" })
+    @Valid
     public Person addPerson(@Valid Person person) {
         this.peopleDAO.create(person);
         return person;

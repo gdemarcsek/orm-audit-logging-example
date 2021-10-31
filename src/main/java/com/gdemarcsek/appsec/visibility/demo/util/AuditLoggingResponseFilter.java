@@ -30,9 +30,8 @@ public class AuditLoggingResponseFilter implements ContainerResponseFilter {
             Object responseEntity = responseContext.getEntity();
             if (responseEntity != null && EntityBase.class.isAssignableFrom(responseEntity.getClass())) {
                 MDC.put("accessedEntityId", ((EntityBase) responseContext.getEntity()).getId().toString());
+                log.info("sensitive entity accessed");
             }
-
-            log.info("sensitive entity accessed");
         }
 
     }
