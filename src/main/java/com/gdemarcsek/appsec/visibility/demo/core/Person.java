@@ -9,10 +9,7 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
-
 import lombok.Data;
-
-import com.gdemarcsek.appsec.visibility.demo.util.AuditAccess;
 
 @Entity
 @Data
@@ -20,7 +17,6 @@ import com.gdemarcsek.appsec.visibility.demo.util.AuditAccess;
 @NamedQueries({ @NamedQuery(name = "com.example.helloworld.core.Person.findAll", query = "SELECT p FROM Person p") })
 public class Person extends EntityBase {
         @Column(name = "fullName", nullable = false)
-        @AuditAccess
         @NotNull
         private String fullName;
 

@@ -6,6 +6,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import io.dropwizard.db.DataSourceFactory;
 
+
 public class ORMAuditLoggingDemoConfiguration extends Configuration {
     @Valid
     @NotNull

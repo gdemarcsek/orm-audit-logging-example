@@ -2,6 +2,8 @@ package com.gdemarcsek.appsec.visibility.demo.resources;
 
 import com.gdemarcsek.appsec.visibility.demo.core.Person;
 import com.gdemarcsek.appsec.visibility.demo.db.PersonDAO;
+import com.gdemarcsek.appsec.visibility.demo.presentation.CreatePersonDto;
+import com.gdemarcsek.appsec.visibility.demo.presentation.GetPersonDto;
 
 import io.dropwizard.hibernate.UnitOfWork;
 
@@ -12,21 +14,29 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.modelmapper.ModelMapper;
+
+import lombok.extern.slf4j.Slf4j;
+
 @Path("/people")
 @Produces(MediaType.APPLICATION_JSON)
+@Slf4j
 public class PersonResource {
     private final PersonDAO peopleDAO;
 
-    public PersonResource(PersonDAO peopleDAO) {
-        this.peopleDAO = peopleDAO;
+    private final ModelMapper modelMapper;
+
+    public PersonResource(PersonDAO dao, ModelMapper mm) {
+        this.peopleDAO = dao;
+        this.modelMapper = mm;
     }
 
     @POST
     @UnitOfWork
     @RolesAllowed({ "ADMIN" })
     @Valid
-    public Person addPerson(@Valid Person person) {
-        this.peopleDAO.create(person);
-        return person;
+    public GetPersonDto addPerson(@Valid CreatePersonDto person) {
+        Person p = this.peopleDAO.create(modelMapper.map(person, Person.class));
+        return modelMapper.map(p, GetPersonDto.class);
     }
 }
