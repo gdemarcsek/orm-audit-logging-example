@@ -13,13 +13,14 @@ import io.dropwizard.Application;
 import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import lombok.extern.slf4j.Slf4j;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.hibernate.HibernateBundle;
 import io.dropwizard.hibernate.SessionFactoryFactory;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
+import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.auth.AuthValueFactoryProvider;
+import javax.ws.rs.client.Client;
 
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import com.google.common.collect.ImmutableList;
@@ -29,7 +30,6 @@ import org.modelmapper.ModelMapper;
 
 import java.util.UUID;
 
-@Slf4j
 public class ORMAuditLoggingDemoApplication extends Application<ORMAuditLoggingDemoConfiguration> {
     private final HibernateBundle<ORMAuditLoggingDemoConfiguration> hibernateBundle = new HibernateBundle<ORMAuditLoggingDemoConfiguration>(
             ImmutableList.<Class<?>>of(Person.class), new SessionFactoryFactory() {
@@ -70,23 +70,26 @@ public class ORMAuditLoggingDemoApplication extends Application<ORMAuditLoggingD
     public void run(final ORMAuditLoggingDemoConfiguration configuration, final Environment environment) {
         final PersonDAO dao = new PersonDAO(hibernateBundle.getSessionFactory());
         final ModelMapper mm = new ModelMapper();
-
-        Converter<UUID, String> uuidToString = ctx -> ctx.getSource() == null ? null : ctx.getSource().toString();
-        mm.typeMap(Person.class, GetPersonDto.class).addMappings(mapper -> mapper.using(uuidToString).map(Person::getId, GetPersonDto::setId));
-        Converter<String, Sensitive<String>> sensitiveConverter = ctx -> ctx.getSource() == null ? null : new Sensitive<String>(ctx.getSource(), HashRedactionStrategy.getInstance());
-        mm.typeMap(Person.class, GetPersonDto.class).addMappings(mapper -> mapper.using(sensitiveConverter).map(Person::getFullName, GetPersonDto::setFullName));
+        final Client httpClient = new JerseyClientBuilder(environment).using(configuration.getJerseyClientConfiguration()).build(getName());
         
+        Converter<UUID, String> uuidToString = ctx -> ctx.getSource() == null ? null : ctx.getSource().toString();
+        mm.typeMap(Person.class, GetPersonDto.class)
+                .addMappings(mapper -> mapper.using(uuidToString).map(Person::getId, GetPersonDto::setId));
+        Converter<String, Sensitive<String>> sensitiveConverter = ctx -> ctx.getSource() == null ? null
+                : new Sensitive<String>(ctx.getSource(), HashRedactionStrategy.getInstance());
+        mm.typeMap(Person.class, GetPersonDto.class).addMappings(
+                mapper -> mapper.using(sensitiveConverter).map(Person::getFullName, GetPersonDto::setFullName));
+
         environment.jersey()
                 .register(new AuthDynamicFeature(new BasicCredentialAuthFilter.Builder<User>()
                         .setAuthenticator(new ExampleAuthenticator()).setAuthorizer(new ExampleAuthorizer())
                         .setRealm("SUPER SECRET STUFF").buildAuthFilter()));
+    
         environment.jersey().register(RolesAllowedDynamicFeature.class);
         environment.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
         environment.jersey().register(new ThreadLocalContextFilter());
         environment.jersey().register(new AuditLoggingResponseFilter());
         environment.jersey().register(new PersonResource(dao, mm));
-
-        //log.info("GetPersonDto annotation:" + GetPersonDto.class.getAnnotations()[0].annotationType().getName());
     }
 
 }

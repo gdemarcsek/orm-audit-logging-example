@@ -16,11 +16,9 @@ import javax.ws.rs.core.MediaType;
 
 import org.modelmapper.ModelMapper;
 
-import lombok.extern.slf4j.Slf4j;
 
 @Path("/people")
 @Produces(MediaType.APPLICATION_JSON)
-@Slf4j
 public class PersonResource {
     private final PersonDAO peopleDAO;
 

@@ -12,25 +12,30 @@ import java.util.ArrayList;
 
 public class AuditInterceptor extends EmptyInterceptor {
     public final static int MAX_ENTITY_IDS = 100;
+
     enum WriteOperation {
-        UPDATE,
-        CREATE,
-        DELETE
+        UPDATE, CREATE, DELETE
     }
 
     private void updateMDC(Object entity, WriteOperation op) {
         Integer oldWriteCount = Integer.parseInt(Optional.ofNullable(MDC.get("entityWriteCount")).orElse("0"));
         MDC.put("entityWriteCount", String.valueOf(oldWriteCount) + 1);
-        
+
         if (oldWriteCount >= MAX_ENTITY_IDS - 1) {
             return;
         }
 
         String idKeyName = "entityIds";
         switch (op) {
-            case UPDATE: idKeyName = "changedEntityIds"; break;
-            case CREATE: idKeyName = "createdEntityIds"; break;
-            case DELETE: idKeyName = "deletedEntityIds"; break;
+        case UPDATE:
+            idKeyName = "changedEntityIds";
+            break;
+        case CREATE:
+            idKeyName = "createdEntityIds";
+            break;
+        case DELETE:
+            idKeyName = "deletedEntityIds";
+            break;
         }
 
         ArrayList<String> ids = new ArrayList<String>();
@@ -39,7 +44,7 @@ public class AuditInterceptor extends EmptyInterceptor {
             ids.addAll(Arrays.asList(currentList.split(",")));
         }
         ids.add(((EntityBase) entity).getId().toString());
-        
+
         MDC.put(idKeyName, String.join(",", ids));
     }
 

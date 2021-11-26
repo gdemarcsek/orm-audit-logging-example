@@ -8,14 +8,8 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
-
-import com.gdemarcsek.appsec.visibility.demo.core.EntityBase;
-
 import org.slf4j.MDC;
 
-@Slf4j
 public class AuditLoggingResponseFilter implements ContainerResponseFilter {
 
     @Override
@@ -27,14 +21,15 @@ public class AuditLoggingResponseFilter implements ContainerResponseFilter {
         if (entityType == null) {
             return;
         }
-        
+
         MDC.put("accessedEntityType", entityType.getTypeName());
-        
+
         try {
             if (Class.forName(entityType.getTypeName()).getAnnotation(AuditAccess.class) != null) {
                 MDC.put("accessedEntity", responseContext.getEntity().toString());
             }
-        } catch(ClassNotFoundException e) {}
+        } catch (ClassNotFoundException e) {
+        }
     }
 
 }
